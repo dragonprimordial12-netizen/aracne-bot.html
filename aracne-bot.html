@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aracne · Bot VTuber</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@700&family=IM+Fell+English:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{--fire:#ff4d00;--gold:#ffd700;--ember:#ff8c00;--dark:#050305;--card:rgba(20,8,4,.88);--text:#f4e9da;--muted:#b39a86;--border:rgba(255,140,0,.35);--ok:#4ade80;--err:#ef4444}
+*{box-sizing:border-box}
+body{margin:0;background:var(--dark);color:var(--text);font-family:'Cinzel',serif;min-height:100vh;
+background-image:radial-gradient(ellipse at 50% 0,rgba(255,77,0,.18),transparent 60%)}
+header{text-align:center;padding:2rem 1rem 1rem}
+h1{font-family:'Cinzel Decorative',serif;font-size:clamp(1.6rem,5vw,2.6rem);margin:0;color:var(--fire);
+text-shadow:0 0 8px var(--fire),0 0 30px var(--ember)}
+header p{font-family:'IM Fell English',serif;font-style:italic;color:var(--muted);margin:.4rem 0 0}
+main{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:1.2rem;max-width:1100px;margin:0 auto;padding:1rem}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--border);padding:1.1rem;
+clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px)}
+.panel h2{font-size:.95rem;margin:0 0 .8rem;color:var(--gold);letter-spacing:.04em}
+label{display:block;font-size:.72rem;color:var(--muted);margin:.7rem 0 .2rem}
+input,select,textarea{width:100%;background:rgba(0,0,0,.55);border:1px solid var(--border);color:var(--text);
+font:inherit;font-size:.82rem;padding:.5rem .6rem;border-radius:3px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;gap:.6rem;align-items:flex-end}.row>*{flex:1}
+button{font:inherit;font-weight:700;font-size:.8rem;cursor:pointer;border:none;color:var(--dark);padding:.65rem 1rem;
+background:linear-gradient(135deg,var(--gold),var(--fire));
+clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+button.sec{background:rgba(255,140,0,.15);color:var(--text);border:1px solid var(--border)}
+button.stop{background:linear-gradient(135deg,#888,var(--err))}
+#start{width:100%;font-size:.95rem;padding:.85rem;margin-top:1rem}
+details{margin-bottom:.4rem;border-top:1px solid var(--border);padding-top:.5rem}
+summary{cursor:pointer;color:var(--gold);font-size:.85rem;padding:.3rem 0}
+#log{height:430px;overflow-y:auto;background:rgba(0,0,0,.55);border:1px solid var(--border);padding:.7rem;
+font-family:'IM Fell English',serif;font-size:1rem;line-height:1.5}
+#log div{margin-bottom:.45rem}
+.ok{color:var(--ok)}.err{color:var(--err)}.ia{color:#c9a3ff}.chat{color:var(--text)}.sys{color:var(--muted)}
+.status{font-size:.75rem;color:var(--muted);margin-top:.6rem}
+.warn{font-size:.72rem;color:var(--ember);margin-top:.8rem;line-height:1.5}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Aracne · Bot VTuber</h1>
+  <p>Chat de YouTube → Gemini → voz de Fish Audio → veadotube mini</p>
+</header>
+<main>
+<section class="panel">
+  <h2>Configuración</h2>
+  <details open><summary>YouTube</summary>
+    <label for="yt">API key de YouTube Data v3</label><input id="yt" type="password" autocomplete="off">
+    <label for="vid">Link o ID del directo</label><input id="vid" placeholder="https://www.youtube.com/watch?v=...">
+  </details>
+  <details open><summary>Gemini (respuestas)</summary>
+    <label for="gem">API key de Gemini</label><input id="gem" type="password" autocomplete="off">
+    <label for="gmodel">Modelo</label><input id="gmodel">
+  </details>
+  <details open><summary>Fish Audio (voz)</summary>
+    <label for="fish">API key de Fish Audio</label><input id="fish" type="password" autocomplete="off">
+    <label for="voice">Voice ID</label><input id="voice">
+    <label for="fmodel">Modelo (header)</label><input id="fmodel">
+  </details>
+  <details open><summary>veadotube mini</summary>
+    <label for="vaddr">Dirección del servidor WebSocket</label>
+    <div class="row"><input id="vaddr"><button class="sec" id="vcon" type="button">Conectar</button></div>
+    <div class="row">
+      <div><label for="stTalk">Estado hablando</label><select id="stTalk"></select></div>
+      <div><label for="stIdle">Estado reposo</label><select id="stIdle"></select></div>
+    </div>
+  </details>
+  <details><summary>Personalidad y ajustes</summary>
+    <label for="persona">Personalidad</label><textarea id="persona"></textarea>
+    <div class="row">
+      <div><label for="cool">Pausa entre respuestas (s)</label><input id="cool" type="number" min="0" max="120"></div>
+      <div><label for="owner">Mensajes del dueño</label><select id="owner"><option value="1">Responder</option><option value="0">Ignorar</option></select></div>
+    </div>
+  </details>
+  <button id="start" type="button">Iniciar bot</button>
+  <p class="warn">Las claves se guardan solo en este navegador. No subas este archivo a GitHub con claves escritas ni lo publiques con ellas.</p>
+</section>
+<section class="panel">
+  <h2>Registro en vivo</h2>
+  <div id="log" aria-live="polite"></div>
+  <label for="test">Probar sin directo</label>
+  <div class="row">
+    <input id="test" value="hola Aracne, ¿cómo estás?">
+    <button class="sec" id="tIA" type="button">Mensaje falso</button>
+    <button class="sec" id="tVoz" type="button">Solo voz</button>
+  </div>
+  <div class="status" id="status">Detenido</div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const DEF={gmodel:'gemini-flash-latest',fmodel:'s2.1-pro',voice:'02f56bcab6bb42e1863a584879e12da8',vaddr:'127.0.0.1:2424',cool:'8',owner:'1',
+persona:"Eres Aracne, una VTuber araña corrupta, calculadora y sarcástica, latinoamericana. Llamas 'moscas' a tus viewers y 'arañas guardianas' a los mods. Hablas tranquila, con humor seco y frases cortas, y a veces terminas con '...¿no?'. Nunca pierdes la compostura ni te enojas. Responde SIEMPRE en español, máximo 2 frases cortas, sin emojis ni markdown porque tu respuesta se lee en voz alta."};
+const BAN={words:['spam'],symbols:['🔞'],links:['discord.gg/']};
+const IDS=['yt','vid','gem','gmodel','fish','voice','fmodel','vaddr','persona','cool','owner'];
+const store=JSON.parse(localStorage.getItem('aracne')||'{}');
+IDS.forEach(k=>{$(k).value=store[k]??DEF[k]??'';$(k).addEventListener('input',save)});
+['stTalk','stIdle'].forEach(k=>$(k).addEventListener('change',save));
+function save(){const o={};IDS.forEach(k=>o[k]=$(k).value);o.stTalk=$('stTalk').value;o.stIdle=$('stIdle').value;localStorage.setItem('aracne',JSON.stringify(o))}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function log(t,c='sys'){const d=document.createElement('div');d.className=c;d.textContent=t;$('log').appendChild(d);$('log').scrollTop=1e9}
+
+/* ---------- veadotube mini ---------- */
+let ws=null,lastState=null;
+const vsend=o=>{if(ws&&ws.readyState===1)ws.send('nodes: '+JSON.stringify(o))};
+function vcon(){
+  if(ws)ws.close();
+  try{ws=new WebSocket('ws://'+$('vaddr').value.trim()+'?n=Aracne%20Bot')}catch(e){return log('veadotube: dirección inválida','err')}
+  ws.onopen=()=>{log('veadotube conectado','ok');vsend({event:'payload',type:'stateEvents',id:'mini',payload:{event:'list'}})};
+  ws.onmessage=e=>{const m=String(e.data);if(!m.startsWith('nodes:'))return;
+    try{const p=JSON.parse(m.slice(6)).payload;if(p&&p.event==='list'&&p.states)fillStates(p.states)}catch{}};
+  ws.onerror=()=>log('veadotube: no conecta. Revisá que el servidor WebSocket esté activo y la dirección sea la correcta.','err');
+  ws.onclose=()=>log('veadotube desconectado');
+}
+function fillStates(st){
+  ['stTalk','stIdle'].forEach(k=>{$(k).innerHTML='';st.forEach(s=>$(k).add(new Option(s.name||s.id,s.id)))});
+  const guess=st.find(s=>/habl|talk|abiert|open/i.test(s.name||s.id));
+  $('stTalk').value=store.stTalk&&st.some(s=>s.id===store.stTalk)?store.stTalk:(guess?guess.id:st[Math.min(1,st.length-1)].id);
+  $('stIdle').value=store.stIdle&&st.some(s=>s.id===store.stIdle)?store.stIdle:st[0].id;
+  log('Estados de veadotube: '+st.map(s=>s.name||s.id).join(', '),'ok');save();
+}
+function mouth(open){
+  const s=open?$('stTalk').value:$('stIdle').value;
+  if(!s||s===lastState)return;lastState=s;
+  vsend({event:'payload',type:'stateEvents',id:'mini',payload:{event:'set',state:s}});
+}
+$('vcon').onclick=vcon;
+
+/* ---------- voz ---------- */
+let actx,an,src;const au=new Audio();
+function play(url){return new Promise((res,rej)=>{
+  au.src=url;actx=actx||new AudioContext();
+  if(!src){src=actx.createMediaElementSource(au);an=actx.createAnalyser();an.fftSize=512;src.connect(an);an.connect(actx.destination)}
+  actx.resume();const buf=new Uint8Array(an.fftSize);
+  const t=setInterval(()=>{an.getByteTimeDomainData(buf);let s=0;for(const v of buf)s+=(v-128)**2;mouth(Math.sqrt(s/buf.length)>6)},90);
+  au.onended=()=>{clearInterval(t);mouth(false);res()};
+  au.onerror=()=>{clearInterval(t);mouth(false);rej(new Error('el audio no se pudo reproducir'))};
+  au.play().catch(e=>{clearInterval(t);rej(e)});
+})}
+function browserVoice(t){return new Promise(res=>{
+  const u=new SpeechSynthesisUtterance(t);u.lang='es-ES';
+  u.onstart=()=>mouth(true);u.onend=u.onerror=()=>{mouth(false);res()};speechSynthesis.speak(u)})}
+async function speak(t){
+  try{
+    if(!$('fish').value)throw new Error('falta la key de Fish Audio');
+    const r=await fetch('https://api.fish.audio/v1/tts',{method:'POST',
+      headers:{Authorization:'Bearer '+$('fish').value.trim(),'Content-Type':'application/json',model:$('fmodel').value.trim()},
+      body:JSON.stringify({text:t,reference_id:$('voice').value.trim(),format:'mp3'})});
+    if(!r.ok)throw new Error('Fish respondió '+r.status+': '+(await r.text()).slice(0,200));
+    log('Fish Audio OK, reproduciendo','ok');
+    await play(URL.createObjectURL(await r.blob()));
+  }catch(e){
+    const hint=e.message==='Failed to fetch'?' (red o CORS: el navegador bloqueó la llamada)':'';
+    log('Fish Audio falló: '+e.message+hint+'. Uso la voz del navegador.','err');
+    await browserVoice(t);
+  }
+}
+
+/* ---------- Gemini ---------- */
+let hist=[];
+async function gemini(author,text){
+  if(!$('gem').value)throw new Error('falta la key de Gemini');
+  hist.push({role:'user',parts:[{text:author+': '+text}]});hist=hist.slice(-8);
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+$('gmodel').value.trim()+':generateContent?key='+$('gem').value.trim(),
+   {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+     systemInstruction:{parts:[{text:$('persona').value}]},contents:hist,generationConfig:{maxOutputTokens:500}})});
+  const d=await r.json();
+  if(!r.ok)throw new Error('Gemini '+r.status+': '+(d.error?.message||'sin detalle'));
+  const out=(d.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
+  if(!out)throw new Error('Gemini devolvió respuesta vacía');
+  hist.push({role:'model',parts:[{text:out}]});return out;
+}
+
+/* ---------- cola de mensajes ---------- */
+let queue=[],busy=false;
+function enqueue(a,t){queue.push({a,t});if(queue.length>3)queue.shift();run()}
+async function run(){
+  if(busy)return;busy=true;
+  while(queue.length){
+    const m=queue.shift();
+    try{const rep=await gemini(m.a,m.t);log('Aracne: '+rep,'ia');await speak(rep)}
+    catch(e){log(e.message,'err')}
+    await sleep(Math.max(0,+$('cool').value||0)*1000);
+  }
+  busy=false;
+}
+const banned=t=>BAN.words.some(w=>t.toLowerCase().includes(w))||BAN.symbols.some(s=>t.includes(s))||BAN.links.some(l=>t.toLowerCase().includes(l));
+
+/* ---------- YouTube ---------- */
+let running=false,chatId,token,first;
+const vidId=s=>{const m=s.match(/(?:v=|youtu\.be\/|live\/)([\w-]{11})/);return m?m[1]:s.trim()};
+async function ytStart(){
+  const r=await fetch('https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id='+vidId($('vid').value)+'&key='+$('yt').value.trim());
+  const d=await r.json();
+  if(!r.ok)throw new Error('YouTube '+r.status+': '+(d.error?.message||''));
+  chatId=d.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+  if(!chatId)throw new Error('Ese video no tiene chat en vivo activo. Revisá el link y que el directo esté encendido.');
+  token=null;first=true;
+}
+async function poll(){
+  if(!running)return;let wait=6000;
+  try{
+    const r=await fetch('https://www.googleapis.com/youtube/v3/liveChat/messages?part=snippet,authorDetails&liveChatId='+chatId+'&key='+$('yt').value.trim()+(token?'&pageToken='+token:''));
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error?.message||r.status);
+    token=d.nextPageToken;wait=Math.max(d.pollingIntervalMillis||6000,5000);
+    if(first){first=false;log('Chat conectado. Ignoro '+d.items.length+' mensajes anteriores.','ok')}
+    else d.items.forEach(m=>{
+      if(m.snippet.type!=='textMessageEvent')return;
+      const t=m.snippet.displayMessage,a=m.authorDetails.displayName;
+      if(m.authorDetails.isChatOwner&&$('owner').value==='0')return;
+      if(banned(t)){log('Bloqueado por filtro: '+a,'sys');return}
+      log(a+': '+t,'chat');enqueue(a,t);
+    });
+  }catch(e){log('YouTube: '+e.message,'err');wait=20000}
+  setTimeout(poll,wait);
+}
+$('start').onclick=async()=>{
+  const b=$('start');
+  if(running){running=false;b.textContent='Iniciar bot';b.classList.remove('stop');$('status').textContent='Detenido';return log('Bot detenido')}
+  try{
+    actx=actx||new AudioContext();actx.resume();
+    if(!ws||ws.readyState!==1)vcon();
+    log('Buscando el chat del directo...');await ytStart();
+    running=true;b.textContent='Detener bot';b.classList.add('stop');$('status').textContent='Escuchando el chat';poll();
+  }catch(e){log(e.message,'err')}
+};
+$('tIA').onclick=()=>{log('Test: '+$('test').value,'chat');enqueue('Test',$('test').value)};
+$('tVoz').onclick=async()=>{actx=actx||new AudioContext();actx.resume();if(!ws||ws.readyState!==1)vcon();await speak($('test').value)};
+log('Listo. Probá primero "Mensaje falso" y "Solo voz": no necesitan directo.');
+</script>
+</body>
+</html>
