@@ -73,6 +73,10 @@ font-family:'IM Fell English',serif;font-size:1rem;line-height:1.5}
       <div><label for="stTalk">Estado hablando</label><select id="stTalk"></select></div>
       <div><label for="stIdle">Estado reposo</label><select id="stIdle"></select></div>
     </div>
+    <div class="row">
+      <div><label for="stBlink">Parpadeo (boca cerrada)</label><select id="stBlink"></select></div>
+      <div><label for="stBlinkTalk">Parpadeo (boca abierta)</label><select id="stBlinkTalk"></select></div>
+    </div>
   </details>
   <details><summary>Personalidad y ajustes</summary>
     <label for="persona">Personalidad</label><textarea id="persona"></textarea>
@@ -104,8 +108,8 @@ const BAN={words:['spam'],symbols:['🔞'],links:['discord.gg/']};
 const IDS=['yt','vid','gem','gmodel','fish','voice','fmodel','vaddr','persona','cool','owner'];
 const store=JSON.parse(localStorage.getItem('aracne')||'{}');
 IDS.forEach(k=>{$(k).value=store[k]??DEF[k]??'';$(k).addEventListener('input',save)});
-['stTalk','stIdle'].forEach(k=>$(k).addEventListener('change',save));
-function save(){const o={};IDS.forEach(k=>o[k]=$(k).value);o.stTalk=$('stTalk').value;o.stIdle=$('stIdle').value;localStorage.setItem('aracne',JSON.stringify(o))}
+['stTalk','stIdle','stBlink','stBlinkTalk'].forEach(k=>$(k).addEventListener('change',save));
+function save(){const o={};IDS.forEach(k=>o[k]=$(k).value);['stTalk','stIdle','stBlink','stBlinkTalk'].forEach(k=>o[k]=$(k).value);localStorage.setItem('aracne',JSON.stringify(o))}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function log(t,c='sys'){const d=document.createElement('div');d.className=c;d.textContent=t;$('log').appendChild(d);$('log').scrollTop=1e9}
 
@@ -122,17 +126,33 @@ function vcon(){
   ws.onclose=()=>log('veadotube desconectado');
 }
 function fillStates(st){
-  ['stTalk','stIdle'].forEach(k=>{$(k).innerHTML='';st.forEach(s=>$(k).add(new Option(s.name||s.id,s.id)))});
+  ['stTalk','stIdle','stBlink','stBlinkTalk'].forEach(k=>{
+    $(k).innerHTML='';
+    if(k.startsWith('stBlink'))$(k).add(new Option('(sin parpadeo)',''));
+    st.forEach(s=>$(k).add(new Option(s.name||s.id,s.id)));
+  });
+  const has=id=>st.some(s=>s.id===id);
   const guess=st.find(s=>/habl|talk|abiert|open/i.test(s.name||s.id));
-  $('stTalk').value=store.stTalk&&st.some(s=>s.id===store.stTalk)?store.stTalk:(guess?guess.id:st[Math.min(1,st.length-1)].id);
-  $('stIdle').value=store.stIdle&&st.some(s=>s.id===store.stIdle)?store.stIdle:st[0].id;
+  $('stTalk').value=has(store.stTalk)?store.stTalk:(guess?guess.id:st[Math.min(1,st.length-1)].id);
+  $('stIdle').value=has(store.stIdle)?store.stIdle:st[0].id;
+  $('stBlink').value=has(store.stBlink)?store.stBlink:'';
+  $('stBlinkTalk').value=has(store.stBlinkTalk)?store.stBlinkTalk:'';
   log('Estados de veadotube: '+st.map(s=>s.name||s.id).join(', '),'ok');save();
 }
-function mouth(open){
-  const s=open?$('stTalk').value:$('stIdle').value;
+let hablando=false,cerrados=false;
+function estado(){
+  if(cerrados){const b=hablando?$('stBlinkTalk').value:$('stBlink').value;if(b)return b}
+  return hablando?$('stTalk').value:$('stIdle').value;
+}
+function aplica(){
+  const s=estado();
   if(!s||s===lastState)return;lastState=s;
   vsend({event:'payload',type:'stateEvents',id:'mini',payload:{event:'set',state:s}});
 }
+function mouth(open){hablando=open;aplica()}
+(function parpadeo(){
+  setTimeout(()=>{cerrados=true;aplica();setTimeout(()=>{cerrados=false;aplica();parpadeo()},140)},2500+Math.random()*3500);
+})();
 $('vcon').onclick=vcon;
 
 /* ---------- voz ---------- */
