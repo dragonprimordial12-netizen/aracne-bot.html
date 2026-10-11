@@ -27,9 +27,8 @@ http.createServer(async (req, res) => {
     }
     return;
   }
-  fs.readFile(path.join(__dirname, 'aracne-bot.html'), (err, datos) => {
-    if (err) { res.writeHead(404); return res.end('Falta aracne-bot.html en esta carpeta'); }
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(datos);
-  });
+  const archivo = ['index.html', 'aracne-bot.html'].map(n => path.join(__dirname, n)).find(fs.existsSync);
+  if (!archivo) { res.writeHead(404); return res.end('Falta index.html o aracne-bot.html en esta carpeta'); }
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(fs.readFileSync(archivo));
 }).listen(PORT, () => console.log('Aracne lista en http://localhost:' + PORT));
